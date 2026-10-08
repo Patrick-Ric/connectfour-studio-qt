@@ -137,6 +137,12 @@ packaging\windows\build_windows.bat
 
 See `packaging/windows/README.md`.
 
+Without a Windows machine: the GitHub Actions workflow
+`.github/workflows/windows-build.yml` runs the tests on a Windows runner, builds
+the program with PyInstaller, runs the self test of the `.exe` and provides
+`ConnectFour_Studio_Qt-windows-x64.zip` as a download artifact (on push to
+`main`, on tags `v*`, on pull requests or manually via "Run workflow").
+
 ## Credits
 
 - Engine: **BitBully by Markus Thill** — https://markusthill.github.io/projects/0_bitbully/

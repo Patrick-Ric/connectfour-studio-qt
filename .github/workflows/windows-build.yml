@@ -1,0 +1,76 @@
+# Windows-Build von ConnectFour Studio (Qt) auf einem GitHub-Windows-Runner:
+# Tests (offscreen), PyInstaller-Build, Selbsttest der .exe, ZIP als Artefakt.
+name: Windows-Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          architecture: x64
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Abhaengigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt pyinstaller
+
+      - name: Tests (Spiellogik, KI, GUI offscreen)
+        run: python -m pytest -q
+
+      - name: Selbsttest aus dem Quellcode
+        shell: pwsh
+        run: |
+          $env:CFS_SMOKE_TEST = "1"
+          $env:CFS_USER_DIR = "$env:RUNNER_TEMP\cfs-src"
+          python connectfour_studio_qt.py
+          if ($LASTEXITCODE -ne 0) { throw "Selbsttest (Quellcode) fehlgeschlagen: Exit $LASTEXITCODE" }
+
+      - name: Build-Quellen vorbereiten
+        run: python packaging/windows/prepare_build.py
+
+      - name: PyInstaller-Build
+        run: >
+          pyinstaller --noconfirm --clean --distpath dist --workpath build/pyinstaller
+          packaging/windows/connectfour_studio_qt.spec
+
+      - name: Selbsttest der .exe
+        shell: pwsh
+        run: |
+          $env:CFS_SMOKE_TEST = "1"
+          $env:CFS_USER_DIR = "$env:RUNNER_TEMP\cfs-exe"
+          $exe = "dist\ConnectFour Studio Qt\ConnectFour Studio Qt.exe"
+          if (-not (Test-Path $exe)) { throw "$exe fehlt" }
+          $p = Start-Process -FilePath $exe -PassThru
+          $null = $p.Handle   # noetig, damit ExitCode nach WaitForExit gesetzt ist
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "Selbsttest: Zeitueberschreitung" }
+          if ($p.ExitCode -ne 0) { throw "Selbsttest (.exe) fehlgeschlagen: Exit $($p.ExitCode)" }
+          Write-Host "Selbsttest der .exe: OK"
+          $size = (Get-ChildItem "dist\ConnectFour Studio Qt" -Recurse | Measure-Object Length -Sum).Sum / 1MB
+          Write-Host ("Programmordner: {0:N1} MB" -f $size)
+
+      - name: ZIP packen
+        shell: pwsh
+        run: Compress-Archive -Path "dist\ConnectFour Studio Qt" -DestinationPath "ConnectFour_Studio_Qt-windows-x64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ConnectFour_Studio_Qt-windows-x64
+          path: ConnectFour_Studio_Qt-windows-x64.zip
+          if-no-files-found: error

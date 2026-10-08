@@ -334,6 +334,25 @@ class MainWindow(QMainWindow):
         self.panel.setGeometry(MARGIN + COLS * cell + PANEL_GAP, MARGIN,
                                self.panel.width(), max(1, H - 2 * MARGIN))
 
+    def showEvent(self, ev):
+        super().showEvent(ev)
+        if not getattr(self, "_start_fixed", False):
+            self._start_fixed = True
+            QTimer.singleShot(0, self._fix_start_size)
+
+    def _fix_start_size(self):
+        """Natuerliche Startgroesse exakt (Zoom 0,30): fehlende Pixel des
+        zentralen Bereichs einmalig auf das Fenster aufschlagen."""
+        want = self._central_hint(START_ZOOM)
+        dw = max(0, want.width() - self.central.width())
+        dh = max(0, want.height() - self.central.height())
+        if dw or dh:
+            scr = self.screen().availableGeometry() if self.screen() else None
+            w, h = self.width() + dw, self.height() + dh
+            if scr is not None:
+                w, h = min(w, scr.width()), min(h, scr.height())
+            self.resize(w, h)
+
     def _initial_size(self):
         hint = self.sizeHint()
         scr = self.screen().availableGeometry() if self.screen() else None

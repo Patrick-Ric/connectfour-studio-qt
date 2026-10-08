@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ConnectFour Studio
+Comment=Connect Four with 15 levels, analysis and match mode (Qt)
+Comment[de]=Vier gewinnt mit 15 Spielstufen, Analyse und Matchmodus (Qt)
+Exec=connectfour-studio-qt %f
+Icon=connectfour-studio-qt
+Terminal=false
+Categories=Game;BoardGame;

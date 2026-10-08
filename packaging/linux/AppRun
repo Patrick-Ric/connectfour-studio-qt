@@ -1,0 +1,25 @@
+#!/bin/bash
+# ConnectFour Studio (Qt) – AppImage-Starter
+if [ -z "${APPDIR}" ]; then
+    self=$(readlink -f -- "$0"); export APPDIR="${self%/*}"
+fi
+export PYTHONNOUSERSITE=1
+unset PYTHONPATH PYTHONHOME
+# Beschreibbare Nutzerdaten (Quicksave, Sprache, Einstellungen)
+export CFS_USER_DIR="${CFS_USER_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/connectfour-studio-qt}"
+mkdir -p "$CFS_USER_DIR" 2>/dev/null
+# xcb-Hilfsbibliotheken nur als Rueckfallebene, wenn das System sie nicht hat
+# (Qt >= 6.5 braucht z.B. libxcb-cursor.so.0 fuer X11).
+FB="$APPDIR/usr/lib/xcb-fallback"
+if [ -d "$FB" ]; then
+    for lib in "$FB"/*.so.*; do
+        name="${lib##*/}"
+        if ! /sbin/ldconfig -p 2>/dev/null | grep -q "/$name\$" \
+           && ! ldconfig -p 2>/dev/null | grep -q "/$name\$"; then
+            export LD_LIBRARY_PATH="$FB${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+            break
+        fi
+    done
+fi
+exec "$APPDIR/opt/python3.14/bin/python3.14" -B -s \
+    "$APPDIR/opt/connectfour-studio-qt/connectfour_studio_qt.py" "$@"

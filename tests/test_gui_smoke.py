@@ -60,6 +60,7 @@ def menu_texts(w, idx):
 # ---------------------------------------------------------------------------
 def test_main_window_layout(win):
     assert win.windowTitle() == "ConnectFour Studio"
+    assert wait_until(lambda: win.canvas.cell == 77, 3)       # Zoom 0,30 x 256 px
     assert menu_titles(win) == ["Datei", "Ansicht", "Einstellungen", "Kommandos", "Hilfe"]
     assert [b.text() for b in win.bar_buttons] == ["Neu", "<<", "<", ">", ">>", "Ziehen", "Analyse"]
     assert win.status_text() == "Bereit."
@@ -321,3 +322,30 @@ def test_start_file_argument(win, tmp_path):
     p.write_text("4433")
     win.load_start_file(str(p))
     assert win.history == [3, 3, 2, 2] and win.scores_visible
+
+
+def test_board_mouse(win):
+    from PySide6.QtCore import QPoint, QPointF
+    from PySide6.QtGui import QWheelEvent
+    from cfs_qt.board import SCORE_GAP, SCORE_H
+    win.two_player = True
+    c = win.canvas
+    cell = c.cell
+    QTest.mouseMove(c, QPoint(int(4.5 * cell), cell))
+    assert wait_until(lambda: win.hover_col == 4, 2)            # Ghost-Stein-Spalte
+    QTest.mouseClick(c, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     QPoint(int(2.5 * cell), cell))              # Klick aufs Brett
+    assert win.history == [2]
+    QTest.mouseClick(c, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     QPoint(int(5.5 * cell), c.board_h() + SCORE_GAP + SCORE_H // 2))
+    assert win.history == [2, 5]                                # Klick in die Wertungszeile
+    QTest.mouseClick(c, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier,
+                     QPoint(int(1.5 * cell), c.board_h() + 1))   # Luecke -> nichts
+    assert win.history == [2, 5]
+    old = win.set_no
+    pos = QPointF(cell, cell)
+    ev = QWheelEvent(pos, c.mapToGlobal(pos), QPoint(0, 0), QPoint(0, -120),
+                     Qt.MouseButton.NoButton, Qt.KeyboardModifier.NoModifier,
+                     Qt.ScrollPhase.NoScrollPhase, False)
+    QApplication.sendEvent(c, ev)
+    assert win.set_no != old                                    # Rad runter = naechstes Set

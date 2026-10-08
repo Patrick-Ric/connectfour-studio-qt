@@ -98,6 +98,7 @@ and are fully compatible with the Tkinter version.
 - `tests/` — pytest (game logic, engine, `.4gp` compatibility, offscreen GUI smoke test)
 - `packaging/linux` — AppImage build, `packaging/windows` — PyInstaller build
 - `FEATURES.md` — feature list of the Tk version, checked against this port
+- `PORTING.md` — decisions taken during the Tk → Qt port
 
 ## Development
 

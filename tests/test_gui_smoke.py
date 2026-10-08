@@ -269,8 +269,10 @@ def test_random_position(win):
 
 
 def test_match_turbo(win):
+    size = win.size()
     win._match_start("zufall", "perfekt", 2, True, blind=True)
     assert wait_until(lambda: win.match.fertig, 90)
+    assert win.size().width() == size.width()     # lange Statuszeile verbreitert nicht
     m = win.match
     assert m.done() == 2 and not m.abgebrochen
     assert win.status_text().startswith("Computer-Computer Match beendet")

@@ -1255,7 +1255,8 @@ class MainWindow(QMainWindow):
     # Einstellungen: Stufe, Modus
     # =====================================================================
     def _apply_stufe(self):
-        self.level = levels.normalize_key(self.level) if self.level != "mensch" else "perfekt"
+        if self.level not in levels.STUFEN_ORDER:
+            self.level = "perfekt"
         self._sync_level_radio()
         self.set_info("info_level", self._stufe_label())
         self._save_settings()
@@ -1537,6 +1538,11 @@ class MainWindow(QMainWindow):
         self._help_win.show()
 
     def show_info(self):
+        if self._info_win is not None and self._info_win.lang == cfs_lang.LANG:
+            self._info_win.show()
+            self._info_win.raise_()
+            self._info_win.activateWindow()
+            return
         if self._info_win is not None:
             self._info_win.close()
         self._info_win = InfoDialog(self, cfs_lang.LANG)

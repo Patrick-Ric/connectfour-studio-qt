@@ -79,6 +79,7 @@ class MatchDialog(QDialog):
         self.main = main
         self.setWindowTitle(cfs_lang.t("match_title"))
         self.setModal(False)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         self.resize(470, 700)
         lay = QGridLayout(self)
         lay.setContentsMargins(12, 12, 12, 12)
@@ -236,6 +237,7 @@ class InfoDialog(QDialog):
     def __init__(self, parent, lang):
         super().__init__(parent)
         lang = lang if lang in hc.HELP_LANGS else "de"
+        self.lang = lang
         self.setWindowTitle(cfs_lang.t("info_title", lang))
         self.resize(560, 260)
         lay = QVBoxLayout(self)

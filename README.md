@@ -2,6 +2,8 @@
 
 *Open-source Connect Four with 15 levels, 20 boards, tournament mode, match statistics and perfect real-time analysis.*
 
+![ConnectFour Studio](screenshot-1.png)
+
 A free, offline desktop program for Connect Four — play against the computer,
 analyze positions, and run engine-vs-engine matches. This is the **Qt 6
 (PySide6) port** of the original Tkinter version, with the same features,

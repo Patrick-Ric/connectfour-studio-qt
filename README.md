@@ -23,6 +23,13 @@ menus and keyboard shortcuts.
 
 ## Install & Start
 
+### Download
+
+- [⬇ Linux AppImage (no install needed)](https://github.com/Patrick-Ric/connectfour-studio-qt/releases/latest/download/ConnectFour_Studio_Qt-x86_64.AppImage)
+- [⬇ Windows 64-bit (ZIP, unzip and start `ConnectFour Studio Qt.exe`)](https://github.com/Patrick-Ric/connectfour-studio-qt/releases/latest/download/ConnectFour_Studio_Qt-windows-x64.zip)
+
+All versions: [Releases](https://github.com/Patrick-Ric/connectfour-studio-qt/releases). The Windows build is not code-signed; if SmartScreen warns, choose "More info" → "Run anyway".
+
 ### Linux AppImage (no install needed)
 
 ```bash

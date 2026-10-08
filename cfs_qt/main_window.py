@@ -18,7 +18,7 @@ from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QAction, QActionGroup, QFont, QKeySequence, QShortcut
 from PySide6.QtWidgets import (QApplication, QFileDialog, QFrame, QGridLayout,
                                QGroupBox, QHBoxLayout, QLabel, QMainWindow, QMenu,
-                               QMessageBox, QPushButton, QVBoxLayout, QWidget)
+                               QMessageBox, QVBoxLayout, QWidget)
 
 from cfs_core import APP_NAME, paths
 from cfs_core import engine as eng
@@ -27,6 +27,7 @@ from cfs_core import lang as cfs_lang
 from cfs_core import levels, sets
 from cfs_core.match import Match, SessionScore, human_won_normal
 from cfs_qt.board import SCORE_H, BoardCanvas
+from cfs_qt.buttons import HoverButton
 from cfs_qt.dialogs import HelpDialog, InfoDialog, MatchDialog, RandomDialog
 from cfs_qt.tiles import TileCache
 
@@ -215,7 +216,7 @@ class MainWindow(QMainWindow):
         cmds = (self.new_game, self.goto_first, self.undo, self.redo, self.goto_last,
                 self.engine_move, self.toggle_auto_analyze_btn)
         for key, cmd in zip(BAR_KEYS, cmds):
-            b = QPushButton(cfs_lang.t(key), central)
+            b = HoverButton(cfs_lang.t(key), central)
             b.setFocusPolicy(Qt.FocusPolicy.NoFocus)
             b.setMinimumSize(1, 1)
             b.clicked.connect(lambda _c=False, f=cmd: f())
@@ -269,8 +270,8 @@ class MainWindow(QMainWindow):
                 w.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             sv.addWidget(w)
         sb = QHBoxLayout()
-        self.stand_toggle_btn = QPushButton(cfs_lang.t("score_on"))
-        self.stand_reset_btn = QPushButton(cfs_lang.t("score_reset_btn"))
+        self.stand_toggle_btn = HoverButton(cfs_lang.t("score_on"))
+        self.stand_reset_btn = HoverButton(cfs_lang.t("score_reset_btn"))
         for b, f in ((self.stand_toggle_btn, self._stand_toggle),
                      (self.stand_reset_btn, self._stand_reset)):
             b.setFocusPolicy(Qt.FocusPolicy.NoFocus)

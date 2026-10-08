@@ -365,3 +365,21 @@ def test_board_mouse(win):
                      Qt.ScrollPhase.NoScrollPhase, False)
     QApplication.sendEvent(c, ev)
     assert win.set_no != old                                    # Rad runter = naechstes Set
+
+
+def test_buttons_highlight_on_hover(win):
+    from PySide6.QtCore import QEvent, QPointF
+    from PySide6.QtGui import QEnterEvent
+    from cfs_qt.buttons import HoverButton
+    buttons = win.bar_buttons + [win.stand_toggle_btn, win.stand_reset_btn]
+    assert all(isinstance(b, HoverButton) for b in buttons)
+    b = win.bar_buttons[0]
+    before = b.grab().toImage()
+    QApplication.sendEvent(b, QEnterEvent(QPointF(5, 5), QPointF(5, 5), QPointF(5, 5)))
+    assert b.hovered
+    hover = b.grab().toImage()
+    c0, c1 = before.pixelColor(b.width() // 2, 4), hover.pixelColor(b.width() // 2, 4)
+    assert c1 != c0 and c1.blue() > c1.red()           # sichtbare Toenung (Hervorhebungsfarbe)
+    QApplication.sendEvent(b, QEvent(QEvent.Type.Leave))
+    assert not b.hovered
+    assert b.grab().toImage() == before                 # Verlassen stellt die Taste wieder her

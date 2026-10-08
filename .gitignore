@@ -1,0 +1,18 @@
+# venv + Bytecode
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Nutzerdaten (liegen normalerweise in ~/.config/connectfour-studio-qt)
+quicksave.4gp
+lang.cfg
+settings.json
+
+# Env (lokal, nie committen)
+.env*
+
+# Build-Ausgaben (AppImage / Windows)
+/build/
+/dist/
+*.AppImage

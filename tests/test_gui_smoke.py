@@ -378,8 +378,20 @@ def test_buttons_highlight_on_hover(win):
     QApplication.sendEvent(b, QEnterEvent(QPointF(5, 5), QPointF(5, 5), QPointF(5, 5)))
     assert b.hovered
     hover = b.grab().toImage()
-    c0, c1 = before.pixelColor(b.width() // 2, 4), hover.pixelColor(b.width() // 2, 4)
-    assert c1 != c0 and c1.blue() > c1.red()           # sichtbare Toenung (Hervorhebungsfarbe)
+    # Stilunabhaengig (Fusion, windows11 ...): ganze Taste vergleichen. Die
+    # Toenung in der Hervorhebungsfarbe verschiebt die Pixel Richtung Blau.
+    changed, d_red, d_blue = 0, 0, 0
+    for y in range(0, hover.height(), 2):
+        for x in range(0, hover.width(), 2):
+            c0, c1 = before.pixelColor(x, y), hover.pixelColor(x, y)
+            if c0 != c1:
+                changed += 1
+                d_red += c1.red() - c0.red()
+                d_blue += c1.blue() - c0.blue()
+    assert changed > (hover.width() * hover.height()) // 40   # sichtbar veraendert
+    hl = b.palette().highlight().color()
+    if hl.blue() > hl.red():
+        assert d_blue > d_red                               # Toenung Richtung Hervorhebungsfarbe
     QApplication.sendEvent(b, QEvent(QEvent.Type.Leave))
     assert not b.hovered
     assert b.grab().toImage() == before                 # Verlassen stellt die Taste wieder her

@@ -347,20 +347,20 @@ class MainWindow(QMainWindow):
         dw = max(0, want.width() - self.central.width())
         dh = max(0, want.height() - self.central.height())
         if dw or dh:
-            scr = self.screen().availableGeometry() if self.screen() else None
-            w, h = self.width() + dw, self.height() + dh
-            if scr is not None:
-                w, h = min(w, scr.width()), min(h, scr.height())
+            w, h = self._cap_to_screen(self.width() + dw, self.height() + dh)
             self.resize(w, h)
 
-    def _initial_size(self):
-        hint = self.sizeHint()
+    def _cap_to_screen(self, w, h):
+        """Nie groesser als der Bildschirm (minus Taskleisten-Rand, wie Tk)."""
         scr = self.screen().availableGeometry() if self.screen() else None
-        w, h = hint.width(), hint.height()
         if scr is not None:
             w = min(w, max(200, scr.width() - 40))
             h = min(h, max(200, scr.height() - 80))
-        self.resize(w, h)
+        return w, h
+
+    def _initial_size(self):
+        hint = self.sizeHint()
+        self.resize(*self._cap_to_screen(hint.width(), hint.height()))
 
     # =====================================================================
     # Menue

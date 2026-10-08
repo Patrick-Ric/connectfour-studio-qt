@@ -60,7 +60,21 @@ def menu_texts(w, idx):
 # ---------------------------------------------------------------------------
 def test_main_window_layout(win):
     assert win.windowTitle() == "ConnectFour Studio"
-    assert wait_until(lambda: win.canvas.cell == 77, 3)       # Zoom 0,30 x 256 px
+    # Natuerliche Startgroesse (Zoom 0,30 x 256 px = 77 px), sofern sie auf den
+    # Bildschirm passt; sonst gekappt (offscreen-Bildschirm ist nur 800x600).
+    from cfs_qt.main_window import START_ZOOM
+    QApplication.processEvents()
+    extra_w = win.width() - win.central.width()
+    extra_h = win.height() - win.central.height()
+    want = win._central_hint(START_ZOOM)
+    fits = win._cap_to_screen(want.width() + extra_w, want.height() + extra_h) == \
+        (want.width() + extra_w, want.height() + extra_h)
+    if fits:
+        assert wait_until(lambda: win.canvas.cell == 77, 3)
+    else:
+        assert 20 <= win.canvas.cell < 77
+        scr = win.screen().availableGeometry()
+        assert win.height() <= scr.height() and win.width() <= scr.width()
     assert menu_titles(win) == ["Datei", "Ansicht", "Einstellungen", "Kommandos", "Hilfe"]
     assert [b.text() for b in win.bar_buttons] == ["Neu", "<<", "<", ">", ">>", "Ziehen", "Analyse"]
     assert win.status_text() == "Bereit."

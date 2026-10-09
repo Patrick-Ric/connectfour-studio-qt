@@ -12,5 +12,5 @@ Module:
 """
 
 APP_NAME = "ConnectFour Studio"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 ENGINE_NAME = "BitBully von Markus Thill"

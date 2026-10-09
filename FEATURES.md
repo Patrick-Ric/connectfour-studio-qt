@@ -114,6 +114,8 @@ Kürzel hinter einem Punkt: (T) = automatischer Test, (S) = Screenshot geprüft.
 - [x] Verlierer: zufälliger Verlustzug, sonst Remis, sonst Zufall (T)
 - [x] Analyse (F6/F7) immer perfekt
 - [x] Info „Quelle“: „Buch 12d“ bis 12 Steine, danach „berechnet“; „Tiefe“: letzte Iterationstiefe
+- [x] Neu (10/2026, alle Versionen): Iteration endet unter 12 Steinen, sobald jede Variante das Buch erreicht (Tiefe „Buch 12d“; gleiche Werte, 10–28 % der Knoten) (T)
+- [x] Neu (10/2026, alle Versionen): Mini-Buch „Buch 2d“ – exakte Werte der 57 Stellungen mit 0–2 Steinen eingebaut, dort keine Suche (Tiefe/Quelle „Buch 2d“, 0 Knoten) (T)
 
 ## 11. Dauer-Analyse
 

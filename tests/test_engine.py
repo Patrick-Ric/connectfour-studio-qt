@@ -99,12 +99,53 @@ def test_loser_level_prefers_losing_moves(engine):
 
 
 def test_iterative_scores_progress_and_abort(engine):
+    from cfs_core.engine import DEPTH_BOOK
+    seen = []
+    scores, nodes = engine.iterative_scores(board([3, 3, 2]), on_progress=lambda *a: seen.append(a[0]))
+    assert set(scores) == set(range(7)) and nodes > 0
+    assert seen and seen[-1] == DEPTH_BOOK  # 3 Steine: Ende, sobald alles im Buch liegt
+    seen.clear()
+    b13 = board(gm.parse_4gp("4444443333332"))
+    engine.iterative_scores(b13, on_progress=lambda *a: seen.append(a[0]))
+    assert seen[-1] == -1                   # ab 12 Steinen: letzte Stufe = Vollsuche
+    scores, _ = engine.iterative_scores(board([3, 3, 2]), abort=lambda: True)
+    assert scores == {}
+
+
+def test_minibook_matches_full_search(engine):
+    """Buch 2d: alle 57 Stellungen mit 0-2 Steinen = Vollsuche (auch die
+    Reihenfolge des dicts wie score_all_moves)."""
+    from cfs_core import minibook
+    from cfs_core.engine import DEPTH_MINIBOOK
+    seqs = [[]] + [[a] for a in range(7)] + [[a, b] for a in range(7) for b in range(7)]
+    for seq in seqs:
+        b = board(seq)
+        with engine.lock:
+            full = engine.agent.score_all_moves(b, max_depth=-1)
+        mini = minibook.scores(b)
+        assert mini == full and list(mini) == list(full), seq
     seen = []
     scores, nodes = engine.iterative_scores(board([3]), on_progress=lambda *a: seen.append(a[0]))
-    assert set(scores) == set(range(7)) and nodes > 0
-    assert seen and seen[-1] == -1          # letzte Stufe = Vollsuche
-    scores, _ = engine.iterative_scores(board([3]), abort=lambda: True)
-    assert scores == {}
+    assert nodes == 0 and seen == [DEPTH_MINIBOOK]
+    assert engine.plies_text(1) == "Buch 2d" and engine.book_text(1) == "Buch 2d"
+    assert minibook.scores(board([3, 3, 2])) is None
+
+
+def test_book_depth_stop_same_scores(engine):
+    """Buch 12d: Abbruch an der Buchtiefe liefert dieselben Werte wie die
+    Vollsuche und genau die Knoten der Suche bis zu dieser Tiefe."""
+    from cfs_core.engine import DEPTH_BOOK
+    random.seed(4)
+    for n in range(3, 12):
+        seq = engine.random_legal_seq(n)
+        b = board(seq)
+        scores, nodes = engine.iterative_scores(b)
+        assert engine.last_depth == DEPTH_BOOK
+        assert engine.plies_text(n) == "Buch 12d"
+        with engine.lock:
+            engine.agent.reset_transposition_table()
+            full = engine.agent.score_all_moves(b, max_depth=-1)
+        assert scores == full, seq
 
 
 def test_book_and_labels(engine):

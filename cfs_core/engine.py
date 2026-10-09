@@ -14,6 +14,7 @@ import time
 import bitbully as bb
 
 from cfs_core import lang as cfs_lang
+from cfs_core import minibook
 
 LOSS_POWER = 8  # Gewicht = Verlustlaenge^POWER (nur wenn alles verliert)
 ITER_DEPTHS = (4, 6, 8, 10, 12, 14, 16, 18, 20, -1)
@@ -21,6 +22,21 @@ ITER_DEPTHS = (4, 6, 8, 10, 12, 14, 16, 18, 20, -1)
 BOOK_NAME = "12-ply-dist"
 BOOK_SHORT = "12d"
 BOOK_HORIZON = 12
+
+# Pseudo-Tiefen fuer last_depth/Anzeige (Android-Port 10/2026, alle Versionen gleich):
+DEPTH_BOOK = -2       # Iteration endet, weil jede Variante das 12-ply-Buch erreicht
+DEPTH_MINIBOOK = -3   # Werte aus dem Mini-Buch "Buch 2d" (0-2 Steine, keine Suche)
+
+
+def depth_label(depth):
+    """'Tiefe'-Text: Zahl, 'Voll' (-1), 'Buch 12d' oder 'Buch 2d'."""
+    if depth == -1:
+        return cfs_lang.t("depth_full")
+    if depth == DEPTH_BOOK:
+        return f"{cfs_lang.t('depth_book')} {BOOK_SHORT}"
+    if depth == DEPTH_MINIBOOK:
+        return f"{cfs_lang.t('depth_book')} {minibook.SHORT}"
+    return str(depth)
 
 
 class Engine:
@@ -50,7 +66,7 @@ class Engine:
     def plies_text(self, n_moves):
         """'Tiefe'-Anzeige: letzte Iterationstiefe bzw. Buch-Horizont."""
         if self.last_depth is not None:
-            return cfs_lang.t("depth_full") if self.last_depth == -1 else str(self.last_depth)
+            return depth_label(self.last_depth)
         if not self.is_book_loaded():
             return "–"
         if n_moves <= BOOK_HORIZON:
@@ -58,7 +74,10 @@ class Engine:
         return "–"
 
     def book_text(self, n_moves):
-        """'Quelle'-Anzeige: 'Buch 12d' bis 12 Steine, danach 'berechnet'."""
+        """'Quelle'-Anzeige: 'Buch 2d' (Mini-Buch), 'Buch 12d' bis 12 Steine,
+        danach 'berechnet'."""
+        if self.last_depth == DEPTH_MINIBOOK:
+            return f"{cfs_lang.t('book_from_book')} {minibook.SHORT}"
         if not self.is_book_loaded():
             return "–"
         if n_moves <= BOOK_HORIZON:
@@ -148,6 +167,29 @@ class Engine:
         pending = []
         stop = abort if abort is not None else (lambda: False)
         depths = list(depths)
+        # Bis 2 Steine: exakte Werte aus dem Mini-Buch "Buch 2d", keine Suche.
+        mini = minibook.scores(board)
+        if mini is not None:
+            if stop():
+                return scores, nodes
+            self.last_depth = DEPTH_MINIBOOK
+            if on_progress is not None:
+                try:
+                    on_progress(DEPTH_MINIBOOK, dict(mini), 0, time.time() - t0)
+                except Exception:
+                    import traceback
+                    traceback.print_exc()
+            return dict(mini), 0
+        # Unter 12 Steinen erreicht jede Variante ab Tiefe 12 - Steine das
+        # 12-ply-Buch: ab dort sind die Werte exakt, tiefere Stufen (bis 20
+        # und Voll) wiederholten nur dieselbe Suche -> dort abbrechen.
+        book_depth = None
+        try:
+            stones = 42 - board.moves_left()
+            if self.is_book_loaded() and stones < BOOK_HORIZON:
+                book_depth = BOOK_HORIZON - stones
+        except Exception:
+            book_depth = None
         with self.lock:
             self.agent.reset_node_counter()
             if not keep_tt:
@@ -163,12 +205,15 @@ class Engine:
                 except Exception:
                     break
                 scores, nodes = dict(part), self.agent.get_node_counter()
-                self.last_depth = depth
+                book_done = book_depth is not None and depth != -1 and depth >= book_depth
+                shown = DEPTH_BOOK if book_done else depth
+                self.last_depth = shown
                 dt = time.time() - t0
-                if on_progress is not None and (depth == depths[-1] or dt - last_cb >= 0.2):
+                if on_progress is not None and (depth == depths[-1] or book_done
+                                                or dt - last_cb >= 0.2):
                     last_cb = dt
-                    pending.append((depth, dict(scores), nodes, dt))
-                if depth == -1:
+                    pending.append((shown, dict(scores), nodes, dt))
+                if depth == -1 or book_done:
                     break
                 if stop():
                     break
@@ -241,7 +286,8 @@ class Engine:
                 return result(random.choice(list(all_ml)))
             return result(self.filtered_blunder(board, scores, 5, None))
         dist = {col: bb.BitBully.score_to_moves_left(s, board) for col, s in scores.items()}
-        if len(set(dist.values())) <= 1:
+        exact_already = self.last_depth in (-1, DEPTH_BOOK, DEPTH_MINIBOOK)
+        if len(set(dist.values())) <= 1 and not exact_already:
             try:
                 with self.lock:
                     exact = dict(self.agent.score_all_moves(board, max_depth=-1))

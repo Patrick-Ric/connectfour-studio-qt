@@ -753,7 +753,7 @@ class MainWindow(QMainWindow):
             if match_mode:
                 self._safe_after(0, lambda: self.set_info("info_level", stufe_txt))
                 return
-            label = cfs_lang.t("depth_full") if depth == -1 else str(depth)
+            label = eng.depth_label(depth)
             kn = cfs_lang.fmt_thousands(nodes)
             ms = max(1, int(round(dt * 1000)))
             kns = eng.kns_text(nodes, dt)
@@ -1198,7 +1198,7 @@ class MainWindow(QMainWindow):
         if not self.auto_analyze or self.board.is_game_over():
             return
         self._show_scores(scores, nodes, dt)
-        label = cfs_lang.t("depth_full") if depth == -1 else str(depth)
+        label = eng.depth_label(depth)
         self.set_info("info_depth", f"{label}...")
 
     def _show_scores(self, scores, nodes, dt):
